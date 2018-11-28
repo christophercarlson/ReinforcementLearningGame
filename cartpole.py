@@ -21,7 +21,7 @@ for i_episode in range(20):
         # step function returns: observation, reward, done, info
         
         observation, reward, done, info = env.step(action)
-        print(reward)
+        #print(reward)
        
        	# done being True indicates the episode has terminated. 
        	# (For example, perhaps the pole tipped too far, or you 
