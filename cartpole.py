@@ -3,10 +3,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import random
 
+# GET HORIZONTAL FEATURE IMPLEMENTED
 
-def main(n_trials=1000):
+def main(n_trials=250):
     legalActions = (0, 1)
-    features = [1, 1]
+    features = {"poleAngle":1, "poleVelocity":1}
     weights = [1, 1]
     
     gamma = 0.8
@@ -22,49 +23,50 @@ def main(n_trials=1000):
     numberFails = []
     
     
-    
-    def computeAction(obs):
-        testValues = {action:computeValueFromAction(action, obs) for action in legalActions}
+    def computeAction(observation):
+        testValues = {action:computeValueFromAction(action, observation) for action in legalActions}
         return random.choice(legalActions) if (np.random.random() <= epsilon[0]) else max(testValues, key = testValues.get)
     
     
     # What is the qValue of the next state for taking this action
-    def computeValueFromAction(action, obs):
+    def computeValueFromAction(action, observation):
         # Set testEnv state to current actual state
-        testEnv.state = obs
+        testEnv.state = observation
         # Take hypothetical step in testEnv
-        (t_observation, _, done, _) = testEnv.step(action)
+        (testObservation, _, done, _) = testEnv.step(action)
         testEnv.reset()
         
         # Make features from future state
-        futureFeatures = [1, 1]
-        futureFeatures[0] = (t_observation[2] * t_observation[2])
-        futureFeatures[1] = (t_observation[3] * t_observation[3])
-        return -9999 if done else sum([weight * feat for (weight, feat) in zip(weights, futureFeatures)])
+        futureFeatures = {"poleAngle":1, "poleVelocity":1}
+        getFeatures(futureFeatures, testObservation)
+        return -9999 if done else sum([weight * feat for (weight, feat) in zip(weights, futureFeatures.values())])
     
     
     # The sum of all features multiplied by their weights for this state
     def getQValue(features):
-        return sum([weight * feat for (weight, feat) in zip(weights, features)])
+        return sum([weight * feat for (weight, feat) in zip(weights, features.values())])
     
     
     # Update the weights
     def update(observation, step_reward, action, features):
         difference = (step_reward + gamma * computeValueFromAction(action, observation)) - getQValue(features)
-        for (weight, feature, i) in zip(weights, features, range(len(features))):
+        for (weight, feature, i) in zip(weights, features.values(), range(len(features))):
             weights[i] = weight + alpha * feature * difference
 
 
 def decayEpsilon(epsilon):
     if epsilon[0] > epsilonMin:
         epsilon[0] *= epsilonDecay
-    
 
-    def getFeatures(observation):
+
+    def getFeatures(features, observation):
+        (cartPosition, cartVelocity, poleAngle, poleVelocity) = observation
         # Pole angle squared
-        features[0] = (observation[2] * observation[2])
+        features["poleAngle"] = poleAngle * poleAngle
         # Rotational velocity squared
-        features[1] = (observation[3] * observation[3])
+        features["poleVelocity"] = poleVelocity * poleVelocity
+    # Horizontal position
+# features["cartPosition"] = 0.00001 * cartPosition
 
 
 def episode_reward(weights, epsilon, env=gym.make('CartPole-v0')):
@@ -74,7 +76,7 @@ def episode_reward(weights, epsilon, env=gym.make('CartPole-v0')):
         # try to last 200 steps
         for _ in range(200):
             # Update features based on observation
-            getFeatures(observation)
+            getFeatures(features, observation)
             
             # Find best action
             action = computeAction(observation)
@@ -97,7 +99,7 @@ def train(trial_nbr):
     reward = episode_reward(weights, epsilon)
     if reward < 200:
         numberFails.append(trial_nbr)
-        print(trial_nbr, reward)
+        print("trial: ", trial_nbr, "steps: ", int(reward))
         return reward
 
 
@@ -120,3 +122,4 @@ print_plot_results(max(results))
 
 # Will render if the arg to main() is less than or equal to 5
 main()
+
