@@ -7,8 +7,8 @@ import random
 
 def main(n_trials=250):
     legalActions = (0, 1)
-    features = {"poleAngle":1, "poleVelocity":1}
-    weights = [1, 1]
+    features = {"cartPosition":1,"poleAngle":1, "poleVelocity":1}
+    weights = [1, 1, 1]
     
     gamma = 0.8
     alpha = 0.1
